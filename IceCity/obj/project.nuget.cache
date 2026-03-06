@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "gID1P1lytOQ=",
+  "dgSpecHash": "an3FQb6d4fc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\IceCity.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/runner/work/ICE-City-/ICE-City-/IceCity/IceCity.csproj",
+  "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/microsoft.netcore.app.ref/9.0.12/microsoft.netcore.app.ref.9.0.12.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.12/microsoft.aspnetcore.app.ref.9.0.12.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.12/microsoft.netcore.app.host.linux-x64.9.0.12.nupkg.sha512"
+  ],
   "logs": []
 }
