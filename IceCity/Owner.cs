@@ -2,7 +2,14 @@
 {
     public class Owner
     {
-        public string Name { get; set; }
+        /// <summary>The owner's name.</summary>
+        /// <remarks>
+        /// <c>private set</c> means this property can only be assigned inside this class
+        /// (e.g. via the constructor below). External code can read <c>owner.Name</c>
+        /// but cannot write <c>owner.Name = "…"</c>. This prevents accidental modification
+        /// after the object has been created.
+        /// </remarks>
+        public string Name { get; private set; }
 
         public Owner(string name)
         {
