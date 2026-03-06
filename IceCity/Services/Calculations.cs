@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IceCity.Services
 {
     public class Calculations
     {
-        public List<double> workingHours = new()
+        public List<double> WorkingHours { get; set; } = new()
         {
             1.5, 2, 1.25, 2.5, 2.25, 4.1, 1.75, 2.8, 3.5, 2.9,
             1.2, 2.3, 3.8, 1.9, 2.6, 2.4, 4.0, 1.6, 2.7, 3.2,
             2.1, 3.6, 1.8, 2.9, 2.0, 4.2, 1.7, 2.4, 3.3, 1
         };
-        public List<double> heaterValues = new()
+
+        public List<double> HeaterValues { get; set; } = new()
         {
             12, 14, 11, 15, 13, 16, 12.5, 14.5, 13.2, 15.8,
             11.5, 14.8, 13.7, 15.3, 12.8, 16.2, 13.1, 14.9, 12.3,
@@ -23,17 +21,18 @@ namespace IceCity.Services
 
         public double TotalWorkingTime()
         {
-            return workingHours.Sum();
+            return WorkingHours.Sum();
         }
-        public double MedianHeaterValue()
+
+        public double AverageHeaterValue()
         {
-            return heaterValues.Sum() / heaterValues.Count();
+            return HeaterValues.Sum() / HeaterValues.Count;
         }
+
         public double MonthlyAverageCost()
         {
-            workingHours.Sort();
-            double medianValue = workingHours.Sum() / workingHours.Count();
-            return medianValue * (workingHours.Sum() / (24 * 30));
+            double averageWorkingHours = WorkingHours.Sum() / WorkingHours.Count;
+            return averageWorkingHours * (WorkingHours.Sum() / (24 * 30));
         }
     }
 }

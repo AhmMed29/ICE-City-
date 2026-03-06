@@ -1,8 +1,9 @@
-﻿using IceCity;
-
-public class Heater
+﻿namespace IceCity
 {
-    public House house { get; set; } = null!; 
-    public double powerValue { get; set; }
-    public HeaterType heaterType { get; set; }
+    public class Heater
+    {
+        public House House { get; set; } = null!;
+        public double PowerValue { get; set; }
+        public HeaterType HeaterType { get; set; }
+    }
 }

@@ -1,12 +1,15 @@
-﻿public class Owner
+﻿namespace IceCity
 {
-    public string Name { get; set; }
-    public Owner (string name)
+    public class Owner
     {
-        Name = name;
-    }
+        public string Name { get; set; }
 
-    // the house is required for each house,
-    // so we use null! to indicate that it will be initialized later
-    public List<House> houses { get; set; } = null!;
+        public Owner(string name)
+        {
+            Name = name;
+        }
+
+        // Houses must be set before use; initialized lazily after construction
+        public List<House> Houses { get; set; } = null!;
+    }
 }
