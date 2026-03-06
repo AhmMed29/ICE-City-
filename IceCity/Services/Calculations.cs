@@ -1,39 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace IceCity.Services
 {
+    /// <summary>
+    /// Performs statistical and energy usage calculations on monthly heater data.
+    /// </summary>
     public class Calculations
     {
-        public List<double> workingHours = new()
-        {
-            1.5, 2, 1.25, 2.5, 2.25, 4.1, 1.75, 2.8, 3.5, 2.9,
-            1.2, 2.3, 3.8, 1.9, 2.6, 2.4, 4.0, 1.6, 2.7, 3.2,
-            2.1, 3.6, 1.8, 2.9, 2.0, 4.2, 1.7, 2.4, 3.3, 1
-        };
-        public List<double> heaterValues = new()
-        {
-            12, 14, 11, 15, 13, 16, 12.5, 14.5, 13.2, 15.8,
-            11.5, 14.8, 13.7, 15.3, 12.8, 16.2, 13.1, 14.9, 12.3,
-            15, 13.4, 14.6, 12.9, 16.5, 13.6, 15.1, 14.2, 13.8, 15.4
-        };
+        // WHY CHANGED: Data was hardcoded as public mutable fields inside the business logic class.
+        // That made it impossible to use real user input, and any code could accidentally modify
+        // the lists. Now data comes in through the constructor (private, read-only).
+        private readonly List<double> _workingHours;
+        private readonly List<double> _heaterValues;
 
-        public double TotalWorkingTime()
+        // Default electricity rate per kWh — easily changed without touching every call site.
+        // SUGGESTED FEATURE: Make this configurable per owner/region for multi-region support.
+        public const double DefaultElectricityRatePerKwh = 0.12;
+
+        /// <param name="workingHours">Daily heater working hours for each day of the month.</param>
+        /// <param name="heaterValues">Daily heater load/efficiency values for each day.</param>
+        public Calculations(List<double> workingHours, List<double> heaterValues)
         {
-            return workingHours.Sum();
+            _workingHours = workingHours ?? throw new ArgumentNullException(nameof(workingHours));
+            _heaterValues = heaterValues ?? throw new ArgumentNullException(nameof(heaterValues));
         }
-        public double MedianHeaterValue()
-        {
-            return heaterValues.Sum() / heaterValues.Count();
-        }
-        public double MonthlyAverageCost()
-        {
-            workingHours.Sort();
-            double medianValue = workingHours.Sum() / workingHours.Count();
-            return medianValue * (workingHours.Sum() / (24 * 30));
-        }
+
+        // Total heater usage hours for the whole month.
+        public double TotalWorkingTime() => _workingHours.Sum();
+
+        // WHY RENAMED: The old name "MedianHeaterValue" was wrong — the code computed an
+        // arithmetic mean (sum / count), not a statistical median. Misleading names cause
+        // real bugs when other developers rely on incorrect assumptions.
+        public double AverageHeaterValue() =>
+            _heaterValues.Count > 0 ? _heaterValues.Sum() / _heaterValues.Count : 0;
+
+        // What fraction of the maximum possible running time was the heater actually used.
+        // WHY CHANGED: The old MonthlyAverageCost() had two critical bugs:
+        //   1. workingHours.Sort() mutated the shared list — permanently changing order
+        //      for every future caller, causing silent data corruption.
+        //   2. The variable was named "medianValue" but computed a mean; and the formula
+        //      produced a dimensionless number with no clear meaning or unit.
+        // This replaces it with a clean utilization rate: totalHours / (24h * days).
+        public double MonthlyUtilizationRate() =>
+            _workingHours.Count > 0 ? TotalWorkingTime() / (24.0 * _workingHours.Count) : 0;
+
+        // Calculates estimated monthly electricity cost: hours × kilowatts × rate.
+        // SUGGESTED FEATURE: Add a gas cost overload using cubic-meters and a gas tariff rate.
+        public double CalculateMonthlyCost(double powerKw, double ratePerKwh = DefaultElectricityRatePerKwh) =>
+            TotalWorkingTime() * powerKw * ratePerKwh;
+
+        // Returns the day index (1-based) with the highest usage — useful for peak analysis.
+        // SUGGESTED FEATURE: Surface this in the report as a "peak day" insight.
+        public int PeakUsageDay() =>
+            _workingHours.Count > 0 ? _workingHours.IndexOf(_workingHours.Max()) + 1 : 0;
     }
 }

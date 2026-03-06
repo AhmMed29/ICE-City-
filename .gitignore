@@ -1,0 +1,17 @@
+## .NET build artifacts
+bin/
+obj/
+
+## Visual Studio IDE files
+.vs/
+
+## User-specific files
+*.user
+*.suo
+
+## NuGet packages
+*.nupkg
+
+## OS-specific files
+.DS_Store
+Thumbs.db

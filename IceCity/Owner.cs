@@ -1,12 +1,17 @@
-﻿public class Owner
+namespace IceCity
 {
-    public string Name { get; set; }
-    public Owner (string name)
+    public class Owner
     {
-        Name = name;
-    }
+        public string Name { get; set; }
 
-    // the house is required for each house,
-    // so we use null! to indicate that it will be initialized later
-    public List<House> houses { get; set; } = null!;
+        public Owner(string name)
+        {
+            Name = name;
+        }
+
+        // WHY CHANGED: "houses" (camelCase) → "Houses" (PascalCase) — C# property convention.
+        // Also initialized to an empty list instead of null! to prevent accidental null errors.
+        // SUGGESTED FEATURE: Add address/city field per house for multi-property billing.
+        public List<House> Houses { get; set; } = new();
+    }
 }
