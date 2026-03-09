@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Spectre.Console;
 
 namespace IceCity
 {
@@ -45,13 +46,11 @@ namespace IceCity
 
         public static string ReadInputState()
         {
-            while (true)
-            {
-                Console.Write("Open The Heater y|n ? ");
-                var userInput = Console.ReadLine();
-                if (userInput == "y" || userInput == "n") return userInput;
-                Console.WriteLine("Enter 'y' or 'n' else !");
-            }
+            var choice = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold green]Open The Heater?[/]")
+                    .AddChoices("y", "n"));
+            return choice;
         }
 
         public delegate void DailyUsageDelegate(DailyUsage dailyUsage);

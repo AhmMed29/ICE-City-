@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using static IceCity.Report;
 using static Owner;
+using Spectre.Console;
 
 partial class Program
 {
@@ -56,16 +57,14 @@ partial class Program
             for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
             {
                 DateOnly currentDay = new DateOnly(year, month, day);
-                Console.Clear();
-                Console.WriteLine($"========[{currentDay.ToString("dd/MM/yyyy")}]========");
+                AnsiConsole.Clear();
+                AnsiConsole.Write(new Rule($"[bold cyan]{currentDay.ToString("dd/MM/yyyy")}[/]").RuleStyle("cyan").Centered());
                 string res = DailyUsage.ReadInputState();
                 if (res == "y")
                 {
-                    Console.Write("Working Hours = ");
-                    double wrkingHoursInput = Convert.ToDouble(Console.ReadLine());
+                    double wrkingHoursInput = AnsiConsole.Ask<double>("[bold yellow]Working Hours =[/]");
                     serviceOne.workingHours.Add(wrkingHoursInput);
-                    Console.Write("Heater Values = ");
-                    double htrValuesInput = Convert.ToDouble(Console.ReadLine());
+                    double htrValuesInput = AnsiConsole.Ask<double>("[bold orange1]Heater Values =[/]");
                     serviceOne.heaterValues.Add(htrValuesInput);
                     dailyUsage.dailyUsages.Add(DateTime.Parse(currentDay.ToString()), (wrkingHoursInput, htrValuesInput));
                 }
