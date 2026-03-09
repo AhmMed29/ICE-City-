@@ -1,0 +1,110 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|c:\\users\\t.b\\desktop\\cis projects\\icecity\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|c:\\users\\t.b\\desktop\\cis projects\\icecity\\report.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|solutionrelative:report.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|c:\\users\\t.b\\desktop\\cis projects\\icecity\\owner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|solutionrelative:owner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|c:\\users\\t.b\\desktop\\cis projects\\icecity\\dailyusage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3BD11D88-77A4-47CC-883E-67D2EC0730BC}|IceCity.csproj|solutionrelative:dailyusage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 256,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{40ea2e6b-2121-4bb8-a43e-c83c04b51041}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "DailyUsage.cs",
+              "DocumentMoniker": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\DailyUsage.cs",
+              "RelativeDocumentMoniker": "DailyUsage.cs",
+              "ToolTip": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\DailyUsage.cs",
+              "RelativeToolTip": "DailyUsage.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAtwEEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-09T21:24:44.759Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Owner.cs",
+              "DocumentMoniker": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Owner.cs",
+              "RelativeDocumentMoniker": "Owner.cs",
+              "ToolTip": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Owner.cs",
+              "RelativeToolTip": "Owner.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAIAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-09T21:10:32.566Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Report.cs",
+              "DocumentMoniker": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Report.cs",
+              "RelativeDocumentMoniker": "Report.cs",
+              "ToolTip": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Report.cs",
+              "RelativeToolTip": "Report.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAD4AAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-09T21:06:08.42Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\T.B\\Desktop\\CIS Projects\\IceCity\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAADoAAAAAAAAAAEBAwE4AAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-27T11:32:50.292Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedHeight": 256,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
