@@ -1,66 +1,33 @@
 ﻿using IceCity.Services;
-using System.Diagnostics.Metrics;
-using static Heater;
-using static IceCity.DailyUsage;
-using static Owner;
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
 namespace IceCity
 {
     public class Report
     {
-        List<Heater> Heaters = new();
-        List<Owner> Owners = new();
-
-        public static void getHeaterType(Heater heater)
+        Calculations calculations = new();
+        public void PrintOwnerDetails(Owner owner)
         {
-            if (heater.heaterType == HeaterType.Gas)
-            {
-                Console.WriteLine("The Heater Type Is: Gas");
-            }
-            else if (heater.heaterType == HeaterType.Electric)
-            {
-                Console.WriteLine("The Heater Type Is : Electric");
-            }
+            Console.WriteLine("-----------Owner Report-------------");
+            Console.WriteLine($"Owner Name: {owner.Name}");
+            Console.WriteLine($"Total Working Hours For This Month : {calculations.TotalWorkingTime()}");
+            Console.WriteLine($"Median Heater Value : {calculations.MedianHeaterValue()}");
+            Console.WriteLine($"Average Cost For This Month : {calculations.MonthlyAverageCost()}");
+            Console.WriteLine("-----------------------------------------");
         }
-        public static void getHeaterPower(Heater heater)
+        public void PrintHeaterDetails(Heater heater, Owner owner)
         {
-            Console.WriteLine($"Heater Power Is: {heater.powerValue} KW");
+            Console.WriteLine("-----------Heater Report------------");
+            Console.WriteLine($"Owner Name {owner.Name}");
+            Console.WriteLine($"Heater Type {heater.heaterType}");
+            Console.WriteLine($"Heater Power {heater.powerValue} KW");
+            Console.WriteLine("-----------------------------------------");
         }
-
-        private void PrintReports(DailyUsage dailyUsage)
-        {
-            Heater.heaterInfoDelegate heaterInfDelegate = (e) => Console.WriteLine("-----------Heater Report-------------");
-            heaterInfDelegate += getHeaterType;
-            heaterInfDelegate += getHeaterPower;
-
-            foreach (var kvp in dailyUsage.dailyUsages)
-            {
-                var day = kvp.Key;
-                var (workingHours, consumption) = kvp.Value;
-                Console.WriteLine($"Opened on [{day:dd/MM/yyyy}] WorkingHours: {workingHours}, Consumption: {consumption}");
-            }
-
-            foreach (var heater in Heaters)
-            {
-                heaterInfDelegate(heater);
-            }
-
-            Owner.printOwnerData printOwnerDataDelegate = (m) => Console.WriteLine("-----------Owner Report-------------");
-            printOwnerDataDelegate += printOwnerName;
-
-            foreach (var owner in Owners)
-            {
-                printOwnerDataDelegate(owner);
-            }
-            Console.WriteLine("==========================");
-        }
-        public void printOwnerName(Owner owner)
-        {
-            Console.WriteLine($"Owner Name : [{owner.Name}]");
-        }
-        public void SubscribeToEvents(DailyUsage dailyUsage)
-        {
-            dailyUsage.MonthConsumptionEvent += PrintReports;
-        }
-    } 
+    }
 }
