@@ -29,7 +29,10 @@ partial class Program
         owner.Name = ownerName;
         #endregion
 
-        #region Heater Inputs (power and type)
+        #region Heater Inputs (id, power and type)
+        Console.Write("Heater ID : ");
+        heater.HeaterId = Convert.ToInt32(Console.ReadLine());
+
         Console.Write("Heater Power (Kilowatt) : ");
         heater.powerValue = Convert.ToDouble(Console.ReadLine());
 
@@ -37,10 +40,33 @@ partial class Program
         heater.heaterType = Enum.Parse<HeaterType>(Console.ReadLine());
         #endregion
 
+        #region House Input (id) and assign heater
+        Console.Write("House ID : ");
+        house.HouseID = Convert.ToInt32(Console.ReadLine());
+        heater.houseID = house.HouseID;
+        house.AddHeater(heater);
+        #endregion
+
         #region user input the daily usage
         int year = 2026;
         int month = 2;
         bool isOPen = true;
+
+        // Fake list for open/close state (for testing purposes):
+        // List<string> fakeStates = new()
+        // {
+        //     "y","n","y","y","n","y","y","n","y","y",
+        //     "n","y","y","y","n","y","y","n","y","y",
+        //     "n","y","y","y","n","y","y","n"
+        // };
+
+        // Fake list for working hours (for testing purposes):
+        // List<double> fakeWorkingHours = new()
+        // {
+        //     1.5, 2, 1.25, 2.5, 2.25, 4.1, 1.75, 2.8, 3.5, 2.9,
+        //     1.2, 2.3, 3.8, 1.9, 2.6, 2.4, 4.0, 1.6, 2.7, 3.2,
+        //     2.1, 3.6, 1.8, 2.9, 2.0, 4.2, 1.7, 2.4
+        // };
 
         while (isOPen)
         {
@@ -55,10 +81,10 @@ partial class Program
                     Console.Write("Working Hours = ");
                     double wrkingHoursInput = Convert.ToDouble(Console.ReadLine());
                     serviceOne.workingHours.Add(wrkingHoursInput);
-                    Console.Write("Heater Values = ");
-                    double htrValuesInput = Convert.ToDouble(Console.ReadLine());
-                    serviceOne.heaterValues.Add(htrValuesInput);
-                    dailyUsage.dailyUsages.Add(DateTime.Parse(currentDay.ToString()), (wrkingHoursInput, htrValuesInput));
+                    double consumption = wrkingHoursInput * heater.powerValue;
+                    serviceOne.heaterValues.Add(consumption);
+                    dailyUsage.RecordDailyUsage(currentDay.ToDateTime(TimeOnly.MinValue), wrkingHoursInput, heater.powerValue);
+                    heater.Open(currentDay.ToDateTime(TimeOnly.MinValue));
                 }
                 else
                 {
@@ -73,6 +99,7 @@ partial class Program
         }
         #endregion
 
+        report.SubscribeToHeaterEvents(heater);
         report.SubscribeToEvents(dailyUsage);
     }
 }

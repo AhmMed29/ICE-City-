@@ -3,6 +3,7 @@ using System.Diagnostics.Metrics;
 
 public class Heater
 {
+    public int? HeaterId { get; set; }
     public int? houseID { get; set; }
     private House? House { get; set; } = null!;
 
@@ -40,7 +41,18 @@ public class Heater
         }
     }
 
+    private DateTime? _lastOpenedDate;
+    public DateTime? LastOpenedDate { get => _lastOpenedDate; }
+
     public delegate void heaterInfoDelegate(Heater heater);
+    public delegate void HeaterOpenedDelegate(Heater heater);
+    public event HeaterOpenedDelegate? HeaterOpenedEvent;
+
+    public void Open(DateTime date)
+    {
+        _lastOpenedDate = date;
+        HeaterOpenedEvent?.Invoke(this);
+    }
 
 
 }
