@@ -11,6 +11,13 @@ namespace IceCity
         List<Heater> Heaters = new();
         List<Owner> Owners = new();
 
+        public static void getHeaterLastOpened(Heater heater)
+        {
+            if (heater.LastOpenedDate.HasValue)
+                Console.WriteLine($"Last Opened Date : {heater.LastOpenedDate.Value:dd/MM/yyyy}");
+            else
+                Console.WriteLine("Last Opened Date : Not opened yet");
+        }
         public static void getHeaterType(Heater heater)
         {
             if (heater.heaterType == HeaterType.Gas)
@@ -32,6 +39,7 @@ namespace IceCity
             Heater.heaterInfoDelegate heaterInfDelegate = (e) => Console.WriteLine("-----------Heater Report-------------");
             heaterInfDelegate += getHeaterType;
             heaterInfDelegate += getHeaterPower;
+            heaterInfDelegate += getHeaterLastOpened;
 
             foreach (var kvp in dailyUsage.dailyUsages)
             {
@@ -57,6 +65,10 @@ namespace IceCity
         public void printOwnerName(Owner owner)
         {
             Console.WriteLine($"Owner Name : [{owner.Name}]");
+        }
+        public void SubscribeToHeaterEvents(Heater heater)
+        {
+            Heaters.Add(heater);
         }
         public void SubscribeToEvents(DailyUsage dailyUsage)
         {

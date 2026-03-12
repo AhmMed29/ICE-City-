@@ -43,6 +43,12 @@ namespace IceCity
             }
         }
 
+        public void RecordDailyUsage(DateTime date, double workingHours, double powerKW)
+        {
+            double consumption = powerKW * workingHours;
+            dailyUsages.Add(date, (workingHours, consumption));
+        }
+
         public static string ReadInputState()
         {
             while (true)
