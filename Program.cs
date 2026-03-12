@@ -4,22 +4,22 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using static IceCity.Report;
 using static Owner;
+using Spectre.Console;
+using System.Threading;
 
 partial class Program
 {
     public static void Main()
     {
-        #region Input Values
-
         ServiceOne serviceOne = new();
         DailyUsage dailyUsage = new();
         Heater heater = new();
         Report report = new();
+        House house = new();
 
-        #region Name
+        #region owner input (Name)
         Console.Write("Owner Name : ");
-        var ownerName = "Ahmed"; 
-            //Console.ReadLine();
+        var ownerName = Console.ReadLine();
         while (string.IsNullOrEmpty(ownerName))
         {
             Console.WriteLine("Cant be Empty ! Enter a valid name:");
@@ -29,24 +29,15 @@ partial class Program
         owner.Name = ownerName;
         #endregion
 
-        #region Heater Power
+        #region Heater Inputs (power and type)
         Console.Write("Heater Power (Kilowatt) : ");
-        heater.powerValue = 45.34;
-            //Convert.ToDouble(Console.ReadLine());
-        #endregion
+        heater.powerValue = Convert.ToDouble(Console.ReadLine());
 
-        #region Heater Type
         Console.Write("Heater Type (Gas OR Electric) : ");
-        heater.heaterType = HeaterType.Gas;
-        //Enum.Parse<HeaterType>(Console.ReadLine());
+        heater.heaterType = Enum.Parse<HeaterType>(Console.ReadLine());
         #endregion
 
-        #endregion
-
-        // this prints all the report
-        report.SubscribeToEvents(dailyUsage);
-
-        #region Daily Usage Tracking From user inputs
+        #region user input the daily usage
         int year = 2026;
         int month = 2;
         bool isOPen = true;
@@ -80,11 +71,9 @@ partial class Program
                 }
             }
         }
-
-
         #endregion
 
-        
-
+        report.SubscribeToEvents(dailyUsage);
     }
 }
+

@@ -3,7 +3,8 @@ using System.Diagnostics.Metrics;
 
 public class Heater
 {
-    private House house { get; set; } = null!;
+    public int? houseID { get; set; }
+    private House? House { get; set; } = null!;
 
     private double _powerValue;
     public double powerValue
