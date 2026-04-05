@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IceCity.Services;
+using System.Collections;
 
 namespace IceCity
 {
-    public class DailyUsage
+    public class DailyUsage : IPrintReports
     {
         public Dictionary<DateTime, (double WorkingHours, double Consumption)> dailyUsages = new();
-         
+        
         private double _workingHours;
         public double workingHours
         { get => _workingHours;
@@ -43,6 +40,7 @@ namespace IceCity
             }
         }
 
+
         public void RecordDailyUsage(DateTime date, double workingHours, double powerKW)
         {
             double consumption = powerKW * workingHours;
@@ -62,10 +60,19 @@ namespace IceCity
 
         public delegate void DailyUsageDelegate(DailyUsage dailyUsage);
         public event DailyUsageDelegate? MonthConsumptionEvent;
+
         public void OnMonthExpired()
         {
             MonthConsumptionEvent?.Invoke(this);
         }
-
+        public void PrintMonthlyReport()
+        {
+            foreach (var kvp in dailyUsages)
+            {
+                var day = kvp.Key;
+                var (workingHours, consumption) = kvp.Value;
+                Console.WriteLine($"Opened on [{day:dd/MM/yyyy}] WorkingHours: {workingHours}, Consumption: {consumption}");
+            }
+        }
     }
 }
