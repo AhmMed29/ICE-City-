@@ -15,7 +15,7 @@
             int count = sortedValues.Count;
             int mid = count / 2;
 
-            return (count % 2 != 0) ? sortedValues[mid] : (sortedValues[mid - 1] + sortedValues[mid]) / 2.0;
+            return count.IsOdd() ? sortedValues[mid] : (sortedValues[mid - 1] + sortedValues[mid]) / 2.0;
         }
 
         public double CalculateCost(List<double> heaterValues, List<double> workingHours)

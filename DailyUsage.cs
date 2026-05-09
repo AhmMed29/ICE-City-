@@ -2,6 +2,10 @@ namespace IceCity
 {
     public class DailyUsage
     {
+        public DateTime Date { get; set; }
+        public double HoursWorked { get; set; }
+        public double HeaterValue { get; set; }
+
         public Dictionary<DateTime, (double WorkingHours, double Consumption)> dailyUsages = new();
          
         private double _workingHours;

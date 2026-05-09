@@ -49,8 +49,9 @@ namespace IceCity.UI
                 var line = Console.ReadLine();
                 if (line == "1" || line.Equals("Gas", StringComparison.OrdinalIgnoreCase)) return EnumHeaterType.Gas;
                 if (line == "2" || line.Equals("Electric", StringComparison.OrdinalIgnoreCase)) return EnumHeaterType.Electric;
+                if (line == "3" || line.Equals("Solar", StringComparison.OrdinalIgnoreCase)) return EnumHeaterType.Solar;
                 
-                Console.WriteLine("Enter '1' (Gas) or '2' (Electric). Try again:");
+                Console.WriteLine("Enter '1' (Gas), '2' (Electric), or '3' (Solar). Try again:");
                 Console.Write(prompt);
             }
         }
@@ -87,9 +88,11 @@ namespace IceCity.UI
             Console.WriteLine("  1. Monthly Reports");
             Console.WriteLine("  2. Request Replacement");
             Console.WriteLine("  3. Weather status last month");
-            Console.WriteLine("  4. Exit");
+            Console.WriteLine("  4. Async/Threads/Tasks Printing Demo");
+            Console.WriteLine("  5. Simulate Heater Failure");
+            Console.WriteLine("  6. Exit");
             Console.WriteLine("========================================");
-            Console.Write("Select an option (1-4): ");
+            Console.Write("Select an option (1-6): ");
         }
 
         public static void ConfigureHeater(Heater heater, IEnumerable<int> existingIds)
@@ -102,7 +105,7 @@ namespace IceCity.UI
                 else { heater.HeaterId = possibleId; uniqueIdFound = true; }
             }
             heater.powerValue = ReadPositivePowerKw("Heater Power (Kilowatt) : ");
-            heater.heaterType = ReadHeaterType("Heater Type (1: Gas, 2: Electric) : ");
+            heater.heaterType = ReadHeaterType("Heater Type (1: Gas, 2: Electric, 3: Solar) : ");
         }
 
         public static async Task DisplayWeatherReportAsync(HttpClient httpClient)

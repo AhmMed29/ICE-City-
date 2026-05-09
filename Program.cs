@@ -2,19 +2,108 @@ using IceCity;
 using IceCity.Services;
 using IceCity.UI;
 
+using Microsoft.Extensions.DependencyInjection;
+
 partial class Program
 {
     private static readonly HttpClient _httpClient = new HttpClient();
 
+    public static async Task<List<DailyUsage>> FetchLastMonthWeatherAsync()
+    {
+        var usageList = new List<DailyUsage>();
+        try
+        {
+            DateTime now = DateTime.UtcNow;
+            DateTime start = new DateTime(now.Year, now.Month, 1).AddMonths(-1);
+            DateTime end = new DateTime(now.Year, now.Month, 1).AddDays(-1);
+
+            string url = $"https://archive-api.open-meteo.com/v1/archive?latitude=31.0409&longitude=31.3785&start_date={start:yyyy-MM-dd}&end_date={end:yyyy-MM-dd}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum";
+
+            var response = await _httpClient.GetStringAsync(url);
+            using var json = System.Text.Json.JsonDocument.Parse(response);
+            var daily = json.RootElement.GetProperty("daily");
+            var dates = daily.GetProperty("time").EnumerateArray();
+            var maxTemps = daily.GetProperty("temperature_2m_max").EnumerateArray();
+            var minTemps = daily.GetProperty("temperature_2m_min").EnumerateArray();
+            var rain = daily.GetProperty("precipitation_sum").EnumerateArray();
+
+            while (dates.MoveNext() && maxTemps.MoveNext() && minTemps.MoveNext() && rain.MoveNext())
+            {
+                if (DateTime.TryParse(dates.Current.GetString(), out DateTime date))
+                {
+                    // Simulated storage for weather data mapped to DailyUsage properties
+                    usageList.Add(new DailyUsage
+                    {
+                        Date = date,
+                        HeaterValue = maxTemps.Current.GetDouble(), // Storing max temp as heater value for demonstration
+                        HoursWorked = rain.Current.GetDouble()      // Storing rain as hours for demonstration
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error] Failed to fetch weather async: {ex.Message}");
+        }
+        return usageList;
+    }
+
+    public static void PrintLastMonthDailyUsageWithThreads(List<DailyUsage> usageList)
+    {
+        var t1 = new Thread(() => PrintUsageWithThreadId(usageList));
+        var t2 = new Thread(() => PrintUsageWithThreadId(usageList));
+        t1.Start();
+        t2.Start();
+        t1.Join();
+        t2.Join();
+    }
+
+    public static async Task PrintLastMonthDailyUsageWithTasks(List<DailyUsage> usageList)
+    {
+        var tasks = new[] {
+            Task.Run(() => PrintUsageWithTaskId(usageList)),
+            Task.Run(() => PrintUsageWithTaskId(usageList))
+        };
+        await Task.WhenAll(tasks);
+    }
+
+    private static void PrintUsageWithThreadId(IEnumerable<DailyUsage> usages)
+    {
+        foreach (var u in usages)
+        {
+            Console.WriteLine($"{u.Date:yyyy-MM-dd} | Hours={u.HoursWorked:N1} | HeaterVal={u.HeaterValue:N1} | Thread={Thread.CurrentThread.ManagedThreadId}");
+        }
+    }
+
+    private static void PrintUsageWithTaskId(IEnumerable<DailyUsage> usages)
+    {
+        foreach (var u in usages)
+        {
+            Console.WriteLine($"{u.Date:yyyy-MM-dd} | Hours={u.HoursWorked:N1} | HeaterVal={u.HeaterValue:N1} | Task={Task.CurrentId} | Thread={Thread.CurrentThread.ManagedThreadId}");
+        }
+    }
+
     public static async Task Main()
     {
+        // -------------------------------------------------------------
+        // PART 6: Demonstrate Dependency Inversion (DI)
+        // Set up the DI container
+        // -------------------------------------------------------------
+        var serviceProvider = new ServiceCollection()
+            .AddTransient<ICostCalculationStrategy, StandardCostStrategy>() // Default
+            .AddSingleton<ICostStrategyFactory, CostStrategyFactory>()
+            .AddTransient<CalculationService>() // By default it will get ICostCalculationStrategy injected
+            .BuildServiceProvider();
+
+        // Resolve factory from DI
+        var strategyFactory = serviceProvider.GetRequiredService<ICostStrategyFactory>();
+
         var house = new House();
         var ownerName = ConsoleUI.ReadNonEmptyLine("Owner Name : ", "Cant be Empty ! Enter a valid name:");
         var owner = new Owner(ownerName);
-        // NOTE: This manual instantiation of strategies is functional, but as the project grows,
-        // consider using a Factory pattern or a Dependency Injection container to manage the creation of strategies.
-        ICostCalculationStrategy standardCost = new StandardCostStrategy();
-        ICostCalculationStrategy ecoCost = new EcoCostStrategy();
+        // NOTE: Strategies are now resolved dynamically via the Factory injected through DI.
+        // ICostCalculationStrategy standardCost = new StandardCostStrategy();
+        // ICostCalculationStrategy ecoCost = new EcoCostStrategy();
 
 
         house.HouseID = ConsoleUI.ReadInt32("House ID : ");
@@ -27,8 +116,29 @@ partial class Program
             try
             {
                 var dailyUsage = new DailyUsage();
-                CalculationService serviceOne = new(standardCost);
-                var heater = new Heater(dailyUsage);
+                // Factory creates the strategy. For now we default to Standard for new heaters,
+                // but the report uses the factory to pick the right one.
+                ICostCalculationStrategy currentStrategy = strategyFactory.GetStrategy("standard");
+                CalculationService serviceOne = new CalculationService(currentStrategy);
+                
+                Heater heater;
+                Console.Write("Will you use a Solar heater for this configuration? (y/n): ");
+                if (Console.ReadLine()?.Trim().ToLower() == "y")
+                {
+                    heater = new SolarHeater(dailyUsage);
+                }
+                else
+                {
+                    heater = new Heater(dailyUsage);
+                }
+
+                heater.OpenHeater += (sender, e) => { Console.WriteLine($"Heater opened at {e.Date:yyyy-MM-dd HH:mm}"); };
+                heater.CloseHeater += (sender, e) => { 
+                    SaveDailyUsageDelegate saveDelegate = usage => house.DailyUsages.Add(usage);
+                    var usage = new DailyUsage { Date = e.StartTime.Date, HoursWorked = e.HoursWorked, HeaterValue = heater.powerValue };
+                    saveDelegate(usage);
+                };
+
                 var existingIds = heatersData.Where(h => h.Heater.HeaterId.HasValue).Select(h => h.Heater.HeaterId!.Value);
                 
                 ConsoleUI.ConfigureHeater(heater, existingIds);
@@ -97,13 +207,15 @@ partial class Program
                         var workingHoursList = currentHeater._dailyUsage.dailyUsages.Values.Select(v => v.WorkingHours).ToList();
                         double totalHours = workingHoursList.Sum();
                         
-                        ICostCalculationStrategy selectedStrategy = (totalHours < 120) ? ecoCost : standardCost;
+                        // Use Factory to determine Strategy
+                        string strategyType = (totalHours < 120) ? "eco" : "standard";
+                        ICostCalculationStrategy selectedStrategy = strategyFactory.GetStrategy(strategyType);
                         CalculationService costCalc = new CalculationService(selectedStrategy);
                         
                         var consumptionValues = currentHeater._dailyUsage.dailyUsages.Values.Select(v => v.Consumption).ToList();
                         double totalCost = costCalc.MonthlyCost(workingHoursList, consumptionValues);
                         reportLines.Add($"-------------------------------------------");
-                        reportLines.Add($"Strategy Used: {(totalHours < 120 ? "Eco" : "Standard")}");
+                        reportLines.Add($"Strategy Used: {strategyType.ToUpper()}");
                         reportLines.Add($"Total Cost: {totalCost:N2}");
 
                         foreach(var line in reportLines) Console.WriteLine(line);
@@ -161,6 +273,65 @@ partial class Program
                     break;
 
                 case "4":
+                    Console.WriteLine("\n--- Fetching Weather Data Async & Printing with Threads/Tasks ---");
+                    var weatherUsage = await FetchLastMonthWeatherAsync();
+                    
+                    Console.WriteLine("\n[Threads Printing]");
+                    PrintLastMonthDailyUsageWithThreads(weatherUsage);
+
+                    Console.WriteLine("\n[Tasks Printing]");
+                    await PrintLastMonthDailyUsageWithTasks(weatherUsage);
+                    
+                    Console.WriteLine("\nPress any key to continue...");
+                    Console.ReadKey();
+                    break;
+
+                case "5":
+                    Console.WriteLine("\n--- Simulating Heater Failure ---");
+                    if (house.Heaters != null && house.Heaters.Count > 0)
+                    {
+                        var heaterToFail = house.Heaters[0];
+                        if (heaterToFail != null)
+                        {
+                            try
+                            {
+                                // Simulate failure
+                                throw new HeaterFailedException($"Heater {heaterToFail.HeaterId} has catastrophically failed!");
+                            }
+                            catch (HeaterFailedException ex)
+                            {
+                                Console.WriteLine($"[Alert] Caught exception: {ex.Message}");
+                                Console.WriteLine("Contacting City Center Service for replacement...");
+                                
+                                var cityCenter = new CityCenterService();
+                                var newHeater = await cityCenter.RequestReplacementAsync(house, heaterToFail.HeaterId);
+                                
+                                if (newHeater != null)
+                                {
+                                    Console.WriteLine($"[Success] Replaced with new heater ID: {newHeater.HeaterId}");
+                                    // Update our tracking list if needed
+                                    int idx = heatersData.FindIndex(x => x.Heater.HeaterId == heaterToFail.HeaterId);
+                                    if (idx >= 0)
+                                    {
+                                        heatersData[idx] = (newHeater, newHeater._dailyUsage, heatersData[idx].costService);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("[Error] Replacement failed or heater was null.");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No heaters to fail.");
+                    }
+                    Console.WriteLine("\nPress any key to continue...");
+                    Console.ReadKey();
+                    break;
+
+                case "6":
                     runningDashboard = false;
                     break;
 
