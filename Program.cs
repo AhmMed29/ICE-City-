@@ -1,6 +1,6 @@
 using IceCity;
 using IceCity.Services;
-using System.Text.Json;
+using IceCity.UI;
 
 partial class Program
 {
@@ -9,35 +9,36 @@ partial class Program
     public static async Task Main()
     {
         var house = new House();
-        var ownerName = ReadNonEmptyLine("Owner Name : ", "Cant be Empty ! Enter a valid name:");
+        var ownerName = ConsoleUI.ReadNonEmptyLine("Owner Name : ", "Cant be Empty ! Enter a valid name:");
         var owner = new Owner(ownerName);
+        // NOTE: This manual instantiation of strategies is functional, but as the project grows,
+        // consider using a Factory pattern or a Dependency Injection container to manage the creation of strategies.
+        ICostCalculationStrategy standardCost = new StandardCostStrategy();
+        ICostCalculationStrategy ecoCost = new EcoCostStrategy();
 
-        // Ask for House ID once
-        house.HouseID = ReadInt32("House ID : ");
 
-        // BEST PRACTICE: Store the Heater, its Usage, and Service together in a single list
-        var heatersData = new List<(Heater Heater, DailyUsage Usage, ServiceOne Service)>();
+        house.HouseID = ConsoleUI.ReadInt32("House ID : ");
+
+        var heatersData = new List<(Heater Heater, DailyUsage Usage, CalculationService costService)>();
+
         bool addMoreHeaters = true;
-        
         while (addMoreHeaters)
         {
             try
             {
                 var dailyUsage = new DailyUsage();
-                var serviceOne = new ServiceOne();
+                CalculationService serviceOne = new(standardCost);
                 var heater = new Heater(dailyUsage);
-
                 var existingIds = heatersData.Where(h => h.Heater.HeaterId.HasValue).Select(h => h.Heater.HeaterId!.Value);
-                ConfigureHeaterFromConsole(heater, existingIds);
+                
+                ConsoleUI.ConfigureHeater(heater, existingIds);
 
                 heater.houseID = house.HouseID;
                 house.AddHeater(heater);
 
-                // Add them together as a tuple
-                heatersData.Add((Heater: heater, Usage: dailyUsage, Service: serviceOne));
+                heatersData.Add((heater, dailyUsage, serviceOne));
 
-                // Run the daily usage data collection for the newly added heater
-                RunDailyUsageLoop(2026, 2, heater, dailyUsage, serviceOne);
+                ConsoleUI.RunDailyUsageLoop(2026, 2, heater, dailyUsage, serviceOne);
 
                 bool validInput = false;
                 while (!validInput)
@@ -61,16 +62,7 @@ partial class Program
         bool runningDashboard = true;
         while (runningDashboard)
         {
-            Console.Clear();
-            Console.WriteLine("========================================");
-            Console.WriteLine("             ICE CITY DASHBOARD         ");
-            Console.WriteLine("========================================");
-            Console.WriteLine("  1. Monthly Reports");
-            Console.WriteLine("  2. Request Replacement");
-            Console.WriteLine("  3. Weather status last month");
-            Console.WriteLine("  4. Exit");
-            Console.WriteLine("========================================");
-            Console.Write("Select an option (1-4): ");
+            ConsoleUI.DisplayDashboardMenu();
 
             string? menuSelection = Console.ReadLine()?.Trim();
 
@@ -83,9 +75,9 @@ partial class Program
                         Thread.Sleep(1500);
                         break;
                     }
-                    
+
                     int currentIndex = 0;
-                    int totalPages = heatersData.Count + 1; // +1 for the initial threads/tasks report page
+                    int totalPages = heatersData.Count;
                     bool viewingReports = true;
 
                     while (viewingReports)
@@ -93,36 +85,29 @@ partial class Program
                         Console.Clear();
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine("========================================");
-                        if (currentIndex == 0)
-                            Console.WriteLine($"  ❄️ DAILY USAGE REPORT (Page 1/{totalPages}) ❄️   ");
-                        else
-                            Console.WriteLine($"      ❄️ HEATER REPORT (Page {currentIndex + 1}/{totalPages}) ❄️      ");
+                        Console.WriteLine($"      ❄️ HEATER REPORT (Page {currentIndex + 1}/{totalPages}) ❄️      ");
                         Console.WriteLine("========================================");
                         Console.ResetColor();
 
                         Console.ForegroundColor = ConsoleColor.White;
-                        if (currentIndex == 0)
-                        {
-                            var firstDailyUsage = heatersData[0].Usage;
-                            Console.WriteLine("\n===== Monthly Report Using Threads =====");
-                            var t1 = new Thread(() => PrintUsageWithThreadId(firstDailyUsage));
-                            var t2 = new Thread(() => PrintUsageWithThreadId(firstDailyUsage));
-                            t1.Start(); t2.Start();
-                            t1.Join(); t2.Join();
+                        var currentHeater = heatersData[currentIndex].Heater;
+                        
+                        var reportLines = Report.GetDailyUsageReport(currentHeater._dailyUsage).ToList();
+                        
+                        var workingHoursList = currentHeater._dailyUsage.dailyUsages.Values.Select(v => v.WorkingHours).ToList();
+                        double totalHours = workingHoursList.Sum();
+                        
+                        ICostCalculationStrategy selectedStrategy = (totalHours < 120) ? ecoCost : standardCost;
+                        CalculationService costCalc = new CalculationService(selectedStrategy);
+                        
+                        var consumptionValues = currentHeater._dailyUsage.dailyUsages.Values.Select(v => v.Consumption).ToList();
+                        double totalCost = costCalc.MonthlyCost(workingHoursList, consumptionValues);
+                        reportLines.Add($"-------------------------------------------");
+                        reportLines.Add($"Strategy Used: {(totalHours < 120 ? "Eco" : "Standard")}");
+                        reportLines.Add($"Total Cost: {totalCost:N2}");
 
-                            Console.WriteLine("\n===== Monthly Report Using Task =====");
-                            var tasks = new[]
-                            {
-                                Task.Run(() => PrintUsageWithThreadId(firstDailyUsage)),
-                                Task.Run(() => PrintUsageWithThreadId(firstDailyUsage))
-                            };
-                            await Task.WhenAll(tasks);
-                        }
-                        else
-                        {
-                            var currentHeater = heatersData[currentIndex - 1].Heater;
-                            currentHeater.PrintMonthlyReport();
-                        }
+                        foreach(var line in reportLines) Console.WriteLine(line);
+
 
                         Console.ResetColor();
                         Console.ForegroundColor = ConsoleColor.Yellow;
@@ -146,22 +131,23 @@ partial class Program
                     }
                     else
                     {
-                        foreach (var h in house.Heaters) Console.WriteLine($"  - Heater ID: {h.HeaterId}");
+                        foreach (var h in house.Heaters) Console.WriteLine($"  --> Heater ID: {h.HeaterId}");
 
                         bool replaced = false;
                         while (!replaced)
                         {
-                            int repHeaterId = ReadInt32("Enter Heater ID to replace (or -1 to cancel): ");
-                            if (repHeaterId == -1) break;
+                            int repHeaterId = ConsoleUI.ReadInt32("Enter Heater ID to replace (or 0 to cancel): ");
+                            if (repHeaterId == 0) break;
 
                             var cityCenter = new CityCenterService();
-                            if (house.Heaters.Any(h => h.HeaterId == repHeaterId))
+                            // Using the updated logic that returns bool
+                            if (cityCenter.RequestReplacement(house, repHeaterId))
                             {
-                                cityCenter.RequestReplacement(house, repHeaterId);
                                 heatersData.RemoveAll(x => x.Heater.HeaterId == repHeaterId);
+                                Console.WriteLine($"Heater [{repHeaterId}] has been successfully replaced.");
                                 replaced = true;
                             }
-                            else Console.WriteLine($"Heater [{repHeaterId}] not found. Please try again.");
+                            else Console.WriteLine($"Heater [{repHeaterId}] not found or cannot be replaced. Please try again.");
                         }
                     }
                     Console.WriteLine("\nPress any key to continue...");
@@ -169,7 +155,7 @@ partial class Program
                     break;
 
                 case "3":
-                    await DisplayWeatherReportAsync();
+                    await ConsoleUI.DisplayWeatherReportAsync(_httpClient);
                     Console.WriteLine("\nPress any key to continue...");
                     Console.ReadKey();
                     break;
@@ -182,143 +168,6 @@ partial class Program
                     Console.WriteLine("\n[Warning] Invalid selection. Try again.");
                     Thread.Sleep(1000);
                     break;
-            }
-        }
-    }
-
-    private static async Task DisplayWeatherReportAsync()
-    {
-        Console.WriteLine("\n--- Fetching Weather Data ---");
-        try
-        {
-            DateTime now = DateTime.UtcNow;
-            DateTime start = new DateTime(now.Year, now.Month, 1).AddMonths(-1);
-            DateTime end = new DateTime(now.Year, now.Month, 1).AddDays(-1);
-            string url = $"https://archive-api.open-meteo.com/v1/archive?latitude=31.0409&longitude=31.3785&start_date={start:yyyy-MM-dd}&end_date={end:yyyy-MM-dd}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum";
-            var response = await _httpClient.GetStringAsync(url);
-            using var json = JsonDocument.Parse(response);
-            var daily = json.RootElement.GetProperty("daily");
-            var dates = daily.GetProperty("time").EnumerateArray();
-            var maxTemps = daily.GetProperty("temperature_2m_max").EnumerateArray();
-            var minTemps = daily.GetProperty("temperature_2m_min").EnumerateArray();
-            var rain = daily.GetProperty("precipitation_sum").EnumerateArray();
-
-            Console.WriteLine("Date       | Max Temp | Min Temp | Rain");
-            Console.WriteLine("-----------|----------|----------|-----");
-            while (dates.MoveNext() && maxTemps.MoveNext() && minTemps.MoveNext() && rain.MoveNext())
-            {
-                Console.WriteLine($"{dates.Current.GetString()} | {maxTemps.Current.GetDouble(),5:N1}°C | {minTemps.Current.GetDouble(),5:N1}°C | {rain.Current.GetDouble(),5:N1}mm");
-            }
-        }
-        catch (Exception ex) { Console.WriteLine($"[Error] Failed to fetch weather data: {ex.Message}"); }
-    }
-
-    private static void PrintUsageWithThreadId(DailyUsage usages)
-    {
-        foreach (var kvp in usages.dailyUsages)
-            Console.WriteLine($"{kvp.Key:yyyy-MM-dd} | Hours={kvp.Value.WorkingHours} | Thread={Thread.CurrentThread.ManagedThreadId}");
-    }
-
-    private static string ReadNonEmptyLine(string prompt, string emptyMessage)
-    {
-        Console.Write(prompt);
-        var line = Console.ReadLine();
-        while (string.IsNullOrWhiteSpace(line))
-        {
-            Console.WriteLine(emptyMessage);
-            line = Console.ReadLine();
-        }
-        return line;
-    }
-
-    private static int ReadInt32(string prompt)
-    {
-        Console.Write(prompt);
-        int value;
-        while (!int.TryParse(Console.ReadLine(), out value))
-        {
-            Console.WriteLine("Enter a valid whole number. Try again:");
-            Console.Write(prompt);
-        }
-        return value;
-    }
-
-    private static double ReadPositivePowerKw(string prompt)
-    {
-        Console.Write(prompt);
-        double value;
-        while (!double.TryParse(Console.ReadLine(), out value) || value <= 0)
-        {
-            Console.WriteLine("Enter a positive number for power. Try again:");
-            Console.Write(prompt);
-        }
-        return value;
-    }
-
-    private static HeaterType ReadHeaterType(string prompt)
-    {
-        Console.Write(prompt);
-        while (true)
-        {
-            var line = Console.ReadLine();
-            if (Enum.TryParse(line, ignoreCase: true, out HeaterType type) && (type == HeaterType.Gas || type == HeaterType.Electric))
-                return type;
-            Console.WriteLine("Enter Gas or Electric. Try again:");
-            Console.Write(prompt);
-        }
-    }
-
-    private static void ConfigureHeaterFromConsole(Heater heater, IEnumerable<int> existingIds)
-    {
-        bool uniqueIdFound = false;
-        while (!uniqueIdFound)
-        {
-            int possibleId = ReadInt32("Heater ID : ");
-            if (existingIds.Contains(possibleId)) Console.WriteLine("This Heater ID already exists! Please enter a unique ID.");
-            else { heater.HeaterId = possibleId; uniqueIdFound = true; }
-        }
-        heater.powerValue = ReadPositivePowerKw("Heater Power (Kilowatt) : ");
-        heater.heaterType = ReadHeaterType("Heater Type (Gas OR Electric) : ");
-    }
-
-    private static double ReadWorkingHours()
-    {
-        Console.Write("Working Hours = ");
-        double hours;
-        while (!double.TryParse(Console.ReadLine(), out hours) || hours < 0 || hours > 24)
-        {
-            Console.WriteLine("Enter a valid number of hours (0 - 24). Try again:");
-            Console.Write("Working Hours = ");
-        }
-        return hours;
-    }
-
-    private static void RunDailyUsageLoop(int year, int month, Heater heater, DailyUsage dailyUsage, ServiceOne serviceOne)
-    {
-        bool continueMonths = true;
-        while (continueMonths)
-        {
-            int daysInMonth = DateTime.DaysInMonth(year, month);
-            for (int day = 1; day <= daysInMonth; day++)
-            {
-                var currentDay = new DateOnly(year, month, day);
-                Console.Clear();
-                Console.WriteLine($"========[{currentDay:dd/MM/yyyy}]========");
-
-                string res = DailyUsage.ReadInputState();
-                if (res == "y")
-                {
-                    double workingHoursInput = ReadWorkingHours();
-                    serviceOne.workingHours!.Add(workingHoursInput);
-                    double consumption = workingHoursInput * heater.powerValue;
-                    serviceOne.heaterValues!.Add(consumption);
-                    var dateTime = currentDay.ToDateTime(TimeOnly.MinValue);
-                    dailyUsage.RecordDailyUsage(dateTime, workingHoursInput, heater.powerValue);
-                    heater.Open(dateTime);
-                }
-                else continueMonths = false;
-
-                if (currentDay.Day == daysInMonth) dailyUsage.OnMonthExpired();
             }
         }
     }

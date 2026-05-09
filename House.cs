@@ -1,17 +1,14 @@
-﻿using IceCity;
-
+﻿
 public class House
 {
-    public List<Heater>? Heaters { get; set; } = null;
+    public int? HouseID { get; set; }
     private Owner Owner { get; set; } = null!;
     
-    public int? HouseID { get; set; }
-    public void AddHeater(Heater heater)
+    public List<Heater>? Heaters { get; set; } = null;
+
+    internal void AddHeater(Heater heater)
     {
-        Heaters ??= new List<Heater>();
+        Heaters ??= [];
         Heaters.Add(heater);
     }
-
-    
 }
-
